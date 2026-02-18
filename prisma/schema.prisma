@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication (both admin and clerk)
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  name      String
+  role      String   @default("clerk") // "admin" or "clerk"
+  divisionId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  division  Division? @relation(fields: [divisionId], references: [id])
+}
+
+// Division model
+model Division {
+  id        String   @id @default(cuid())
+  code      String   @unique // 1, 2, 3
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  users     User[]
+  foremen   Foreman[]
+  groundCheckTasks GroundCheckTask[]
+}
+
+// Foreman model (Kemandoran)
+model Foreman {
+  id        String   @id @default(cuid())
+  code      String   // A, B, C
+  name      String
+  divisionId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  division  Division  @relation(fields: [divisionId], references: [id])
+  groundCheckTasks GroundCheckTask[]
+}
+
+// Ground Check Task
+model GroundCheckTask {
+  id           String   @id @default(cuid())
+  clerkName    String
+  divisionId   String
+  foremanId    String
+  notes        String?  // NB field for harvester names
+  status       String   @default("draft") // draft, saved
+  createdBy    String
+  signature    String?  // Base64 signature image
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  division     Division  @relation(fields: [divisionId], references: [id])
+  foreman      Foreman   @relation(fields: [foremanId], references: [id])
+  attachments  Attachment[]
+}
+
+// Attachment model for TPH photos
+model Attachment {
+  id              String   @id @default(cuid())
+  taskId          String
+  tphNumber       Int      // TPH 1, TPH 2, etc.
+  photoData       String   // Base64 image data
+  createdAt       DateTime @default(now())
+  
+  task            GroundCheckTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+// Sync queue for offline/online sync
+model SyncQueue {
+  id        String   @id @default(cuid())
+  action    String   // create, update, delete
+  entity    String   // GroundCheckTask, Attachment, etc.
+  data      String   // JSON data
+  synced    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
