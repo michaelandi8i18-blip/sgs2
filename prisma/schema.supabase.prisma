@@ -1,5 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Prisma schema untuk Supabase PostgreSQL
+// Gunakan file ini untuk koneksi ke Supabase
 
 generator client {
   provider = "prisma-client-js"
@@ -8,7 +8,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DATABASE_DIRECT_URL")
+  directUrl = env("DATABASE_DIRECT_URL") // Opsional, untuk migration
 }
 
 // User model for authentication (both admin and clerk)
@@ -47,7 +47,7 @@ model Foreman {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  @@index([divisionId])
+  @@index([divisionId]) // Index untuk performa query
   division  Division  @relation(fields: [divisionId], references: [id])
   groundCheckTasks GroundCheckTask[]
 }
@@ -58,14 +58,14 @@ model GroundCheckTask {
   clerkName    String
   divisionId   String
   foremanId    String
-  notes        String?  @db.Text // NB field for harvester names
+  notes        String?  @db.Text // NB field for harvester names - using Text for longer content
   status       String   @default("draft") // draft, saved
   createdBy    String
-  signature    String?  @db.Text // Base64 signature image
+  signature    String?  @db.Text // Base64 signature image - using Text for large base64
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   
-  @@index([divisionId])
+  @@index([divisionId]) // Index untuk performa query
   @@index([foremanId])
   @@index([createdAt])
   division     Division  @relation(fields: [divisionId], references: [id])
@@ -78,7 +78,7 @@ model Attachment {
   id              String   @id @default(cuid())
   taskId          String
   tphNumber       Int      // TPH 1, TPH 2, etc.
-  photoData       String   @db.Text // Base64 image data
+  photoData       String   @db.Text // Base64 image data - using Text for large base64
   createdAt       DateTime @default(now())
   
   @@index([taskId])
