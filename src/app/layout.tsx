@@ -14,24 +14,30 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Z.ai Code Scaffold - AI-Powered Development",
-  description: "Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.",
-  keywords: ["Z.ai", "Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "AI development", "React"],
-  authors: [{ name: "Z.ai Team" }],
+  title: "SGS - SPGE Groundcheck System",
+  description: "Sistem Pemeriksaan Kualitas Kelapa Sawit - Ground Check untuk QC Buah, Agronomy, dan Quality Assurance",
+  keywords: ["SGS", "SPGE", "Groundcheck", "Kelapa Sawit", "Palm Oil", "QC Buah", "Quality Control", "Indonesia"],
+  authors: [{ name: "SPGE Team" }],
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
-    url: "https://chat.z.ai",
-    siteName: "Z.ai",
+    title: "SGS - SPGE Groundcheck System",
+    description: "Sistem Pemeriksaan Kualitas Kelapa Sawit",
+    url: "https://sgs2-tau.vercel.app",
+    siteName: "SGS",
     type: "website",
+    locale: "id_ID",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
+    title: "SGS - SPGE Groundcheck System",
+    description: "Sistem Pemeriksaan Kualitas Kelapa Sawit",
+  },
+  robots: {
+    index: false,
+    follow: false,
   },
 };
 
@@ -41,7 +47,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="id" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌴</text></svg>" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >

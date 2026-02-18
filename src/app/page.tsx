@@ -11,6 +11,7 @@ import {
   Trash2, 
   User, 
   Users, 
+  UserCog,
   Building2, 
   ChevronRight, 
   Leaf, 
@@ -1227,9 +1228,9 @@ function generatePDFContent(
 function AdminPanel({ onBack }: { onBack: () => void }) {
   const [activeTab, setActiveTab] = useState('users');
   const { users, addUser, updateUser, deleteUser, setUsers } = useUserMgmtStore();
-  const { divisions, addDivision, setDivisions } = useDataStore();
+  const { divisions, addDivision, setDivisions, foremen, addForeman, setForemen } = useDataStore();
   const [loading, setLoading] = useState(false);
-  
+
   // New user form
   const [newUser, setNewUser] = useState({
     username: '',
@@ -1238,34 +1239,44 @@ function AdminPanel({ onBack }: { onBack: () => void }) {
     role: 'clerk' as 'admin' | 'clerk',
     divisionId: '',
   });
-  
+
   // New division form
   const [newDivision, setNewDivision] = useState({
     code: '',
     name: '',
   });
 
+  // New foreman form
+  const [newForeman, setNewForeman] = useState({
+    code: '',
+    name: '',
+    divisionId: '',
+  });
+
   // Fetch data on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [usersRes, divisionsRes] = await Promise.all([
+        const [usersRes, divisionsRes, foremenRes] = await Promise.all([
           fetch('/api/users'),
           fetch('/api/divisions'),
+          fetch('/api/foremen'),
         ]);
-        
+
         const usersData = await usersRes.json();
         const divisionsData = await divisionsRes.json();
-        
+        const foremenData = await foremenRes.json();
+
         if (usersData.success) setUsers(usersData.users);
         if (divisionsData.success) setDivisions(divisionsData.divisions);
+        if (foremenData.success) setForemen(foremenData.foremen);
       } catch (err) {
         console.error('Fetch error:', err);
       }
     };
-    
+
     fetchData();
-  }, [setUsers, setDivisions]);
+  }, [setUsers, setDivisions, setForemen]);
 
   const handleAddUser = async () => {
     if (!newUser.username || !newUser.password || !newUser.name) {
@@ -1319,7 +1330,7 @@ function AdminPanel({ onBack }: { onBack: () => void }) {
       alert('Mohon lengkapi semua field');
       return;
     }
-    
+
     setLoading(true);
     try {
       const res = await fetch('/api/divisions', {
@@ -1327,7 +1338,7 @@ function AdminPanel({ onBack }: { onBack: () => void }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newDivision),
       });
-      
+
       const data = await res.json();
       if (data.success) {
         addDivision(data.division);
@@ -1340,6 +1351,46 @@ function AdminPanel({ onBack }: { onBack: () => void }) {
       alert('Terjadi kesalahan');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddForeman = async () => {
+    if (!newForeman.code || !newForeman.name || !newForeman.divisionId) {
+      alert('Mohon lengkapi semua field');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/foremen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newForeman),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        addForeman(data.foreman);
+        setNewForeman({ code: '', name: '', divisionId: '' });
+        alert('Kemandoran berhasil ditambahkan');
+      } else {
+        alert(data.message || 'Gagal menambahkan kemandoran');
+      }
+    } catch (err) {
+      alert('Terjadi kesalahan');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteForeman = async (foremanId: string) => {
+    if (!confirm('Yakin ingin menghapus kemandoran ini?')) return;
+
+    try {
+      await fetch(`/api/foremen?id=${foremanId}`, { method: 'DELETE' });
+      setForemen(foremen.filter(f => f.id !== foremanId));
+    } catch (err) {
+      console.error('Delete foreman error:', err);
     }
   };
 
@@ -1377,6 +1428,10 @@ function AdminPanel({ onBack }: { onBack: () => void }) {
                 <TabsTrigger value="divisions" className="flex-1 data-[state=active]:bg-white data-[state=active]:text-orange-600">
                   <Building2 className="w-4 h-4 mr-2" />
                   Divisi
+                </TabsTrigger>
+                <TabsTrigger value="foremen" className="flex-1 data-[state=active]:bg-white data-[state=active]:text-orange-600">
+                  <UserCog className="w-4 h-4 mr-2" />
+                  Kemandoran
                 </TabsTrigger>
               </TabsList>
               
@@ -1564,6 +1619,106 @@ function AdminPanel({ onBack }: { onBack: () => void }) {
                     </motion.div>
                   ))}
                 </div>
+              </TabsContent>
+
+              <TabsContent value="foremen" className="p-6">
+                {/* Add Foreman Form */}
+                <Card className="mb-6 border-orange-200">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-orange-600">Tambah Kemandoran Baru</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label>Kode Kemandoran</Label>
+                        <Input
+                          value={newForeman.code}
+                          onChange={(e) => setNewForeman({ ...newForeman, code: e.target.value })}
+                          placeholder="Contoh: A"
+                          className="border-orange-200"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Nama Kemandoran</Label>
+                        <Input
+                          value={newForeman.name}
+                          onChange={(e) => setNewForeman({ ...newForeman, name: e.target.value })}
+                          placeholder="Contoh: Kemandoran A"
+                          className="border-orange-200"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Divisi</Label>
+                        <Select
+                          value={newForeman.divisionId}
+                          onValueChange={(value) => setNewForeman({ ...newForeman, divisionId: value })}
+                        >
+                          <SelectTrigger className="border-orange-200">
+                            <SelectValue placeholder="Pilih divisi" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {divisions.map(d => (
+                              <SelectItem key={d.id} value={d.id}>
+                                {d.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-end">
+                        <Button
+                          onClick={handleAddForeman}
+                          disabled={loading}
+                          className="bg-orange-500 hover:bg-orange-600"
+                        >
+                          {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+                          Tambah Kemandoran
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Foremen List */}
+                <ScrollArea className="h-[300px]">
+                  <div className="space-y-2">
+                    {foremen.map((foreman, index) => {
+                      const division = divisions.find(d => d.id === foreman.divisionId);
+                      return (
+                        <motion.div
+                          key={foreman.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-bold">
+                              {foreman.code}
+                            </div>
+                            <div>
+                              <p className="font-medium">{foreman.name}</p>
+                              <p className="text-sm text-gray-500">{division?.name || 'Tanpa Divisi'}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="border-orange-300 text-orange-600">
+                              {division?.code || '-'}
+                            </Badge>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteForeman(foreman.id)}
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
               </TabsContent>
             </Tabs>
           </CardContent>
